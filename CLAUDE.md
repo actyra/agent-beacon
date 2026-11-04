@@ -279,15 +279,20 @@ When adding event fields a rule can match on, regenerate the field reference:
 it drifts).
 
 Run one test rather than a suite. Each Go module is separate, so run from inside the module that
-owns the test:
+owns the test, and the two Playwright lines need the one-time setup from the full-suite blocks
+above (`npm ci`, a chromium download, and for the lens suite a built hooks binary):
 
 ```bash
 cd cli/beacon && go test ./internal/endpoint/dashboard -run '^TestHistoryAnswersExactlyLikeTheJSONLScan$'
 cd cli/beacon && go test ./internal/endpoint/... -run History -v
 cd plugins/opencode-beacon && bun test src/beacon.test.ts
-cd browser-extension && npx playwright test e2e/claude.replay.spec.ts
+cd browser-extension && npm run build && npx playwright test e2e/claude.replay.spec.ts
 cd cli/beacon/internal/endpoint/dashboard/testdata/lens-e2e && npx playwright test tests/builtin-approvals.spec.ts
 ```
+
+The extension's `npm test` is a bare `playwright test`, so it does not build `dist/`; the e2e loads
+the built extension, which is why the build belongs in that line. The lens suite starts the
+dashboard itself through its Playwright `webServer`.
 
 To verify a change against a real Claude Code session rather than unit tests, use the repo-local
 skill `self-verify-beacon-in-sandbox` (`.claude/skills/`), which wraps `beacon-sandbox`. Start with
