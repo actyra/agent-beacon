@@ -29,6 +29,7 @@ cannot verify macOS-specific behavior.
 Unit and integration tests for the shipping code, per `CONTRIBUTING.md`:
 
 ```bash
+cd cli/beacon && make build-hooks-current
 cd cli/beacon && go test ./...
 cd cli/beacon && go test -race ./internal/endpoint/...
 cd cli/beacon-hooks && go test ./...
@@ -47,9 +48,14 @@ above:
 ```bash
 cd packages/asymptote-sdk-js && npm ci && npm test && npm run check
 cd browser-extension && npm ci && npm run check && npm run test:unit
+cd plugins/shared && bun run check && bun test
 cd plugins/opencode-beacon && bun run check && bun test
 cd plugins/cline-beacon && bun run check && bun test
 cd plugins/pi-beacon && bun run check && bun test
+cd plugins/omp-beacon && bun run check && bun test
+cd plugins/openclaw-beacon && bun run check && bun test
+cd plugins/prime-beacon && bun run check && bun test
+cd plugins/omo-beacon && bun run check && bun test
 ```
 
 The browser extension's Playwright replay e2e (`npm test` in `browser-extension`) needs `openssl`
