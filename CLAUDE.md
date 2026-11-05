@@ -98,6 +98,21 @@ go test ./...
 go test -race ./internal/endpoint/...
 ```
 
+Without `make` (Windows, or a bare container), do by hand what the Makefile target and the
+`windows-test` CI job do. The CLI validates the embedded binary's architecture at runtime, so the
+hooks binary must match the platform under test:
+
+```powershell
+cd cli/beacon-hooks
+go build -ldflags "-s -w" -o beacon-hooks.exe .
+Copy-Item beacon-hooks.exe ..\beacon\internal\embedded\hooks.bin -Force
+```
+
+On Windows, `go test ./...` in `cli/beacon` fails in packages that were observed failing on the
+windows-2025 runner. The supported scope is the measured package list in the `windows-test` job of
+`.github/workflows/ci.yml` (tracked in #318) — do not widen it casually, and do not read those
+failures as a regression you introduced.
+
 Run hook adapter tests:
 
 ```bash
@@ -262,6 +277,28 @@ go run . rules lint ../../rules  # validate + run the repo rule pack's fixtures
 When adding event fields a rule can match on, regenerate the field reference:
 `beacon rules fields --markdown > spec/threat-rules/FIELDS.md` (a conformance test fails if
 it drifts).
+
+Run one test rather than a suite. Each Go module is separate, so run from inside the module that
+owns the test, and the two Playwright lines need the one-time setup from the full-suite blocks
+above (`npm ci`, a chromium download, and for the lens suite a built hooks binary):
+
+```bash
+cd cli/beacon && go test ./internal/endpoint/dashboard -run '^TestHistoryAnswersExactlyLikeTheJSONLScan$'
+cd cli/beacon && go test ./internal/endpoint/... -run History -v
+cd plugins/opencode-beacon && bun test src/beacon.test.ts
+cd browser-extension && npm run build && npx playwright test e2e/claude.replay.spec.ts
+cd cli/beacon/internal/endpoint/dashboard/testdata/lens-e2e && npx playwright test tests/builtin-approvals.spec.ts
+```
+
+The extension's `npm test` is a bare `playwright test`, so it does not build `dist/`; the e2e loads
+the built extension, which is why the build belongs in that line. The lens suite starts the
+dashboard itself through its Playwright `webServer`.
+
+To verify a change against a real Claude Code session rather than unit tests, use the repo-local
+skill `self-verify-beacon-in-sandbox` (`.claude/skills/`), which wraps `beacon-sandbox`. Start with
+`cd beacon-sandbox && go run ./cmd/beacon-sandbox doctor`, which is free and needs no sandbox. A
+scenario costs real money — roughly $0.06 of sandbox plus a few cents of API — so say so before
+spending it, and the sandbox is Linux-only, so it cannot verify macOS-specific behavior.
 
 ## Release Deployments
 

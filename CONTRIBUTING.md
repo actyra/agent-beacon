@@ -36,8 +36,10 @@ Useful contributions include:
 - `packages/asymptote-sdk-js`: the `@asymptote/sdk` TypeScript SDK for cloud
   agent telemetry. npm.
 - `plugins/*-beacon`: managed plugin and extension sources for OpenCode, Cline,
-  and Pi. bun. Each is the root source for a copy embedded in `cli/beacon`, and
-  tests on both sides fail if the two drift.
+  Pi, Oh My Pi, OpenClaw, Prime Agent, and Senpi/OMO, plus the shared
+  `plugins/shared` sources they generate from. bun. Each is the root source for
+  a copy embedded in `cli/beacon`, and tests on both sides fail if the two
+  drift.
 - `browser-extension`: optional Chrome MV3 collector for Claude.ai and ChatGPT
   chat telemetry. npm, with a Playwright replay harness that loads the real
   extension into headless Chromium.
@@ -99,10 +101,12 @@ go run . endpoint dashboard
 
 ## Common Workflows
 
-Run CLI tests:
+Run CLI tests. Build the embedded hooks binary first — several tests require a
+real one and fail against the checked-in placeholder:
 
 ```bash
 cd cli/beacon
+make build-hooks-current
 go test ./...
 go test -race ./internal/endpoint/...
 ```
@@ -140,6 +144,7 @@ event schema changes, hook normalization, Collector output, or packaging changes
 prefer the full recommended set:
 
 ```bash
+cd cli/beacon && make build-hooks-current
 cd cli/beacon && go test ./...
 cd cli/beacon && go test -race ./internal/endpoint/...
 cd cli/beacon-hooks && go test ./...
@@ -156,9 +161,14 @@ change touches:
 ```bash
 cd packages/asymptote-sdk-js && npm ci && npm test && npm run check
 cd browser-extension && npm ci && npm run check && npm run test:unit && npm test
+cd plugins/shared && bun run check && bun test
 cd plugins/opencode-beacon && bun run check && bun test
 cd plugins/cline-beacon && bun run check && bun test
 cd plugins/pi-beacon && bun run check && bun test
+cd plugins/omp-beacon && bun run check && bun test
+cd plugins/openclaw-beacon && bun run check && bun test
+cd plugins/prime-beacon && bun run check && bun test
+cd plugins/omo-beacon && bun run check && bun test
 ```
 
 The browser extension's `npm test` builds the bundle and runs the Playwright
